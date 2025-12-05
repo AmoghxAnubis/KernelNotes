@@ -20,12 +20,17 @@ export default function EntryForm({ onCreated }: EntryFormProps) {
   const [aiLoading, setAiLoading] = useState(false);
 
   async function fillTagsWithAI() {
-    if (!content.trim()) return;
+    if (!content.trim() || aiLoading) return;
 
     setAiLoading(true);
-    const result = await generateTags(content);
-    setTags(result.join(", "));
-    setAiLoading(false);
+    try {
+      const result = await generateTags(content);
+      if (result.length) {
+        setTags(result.join(", "));
+      }
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -47,6 +52,8 @@ export default function EntryForm({ onCreated }: EntryFormProps) {
     }
   }
 
+  const canSubmit = title.trim() && content.trim();
+
   return (
     <form className="card form-card" onSubmit={handleSubmit}>
       <h2>Log a new kernel</h2>
@@ -62,7 +69,7 @@ export default function EntryForm({ onCreated }: EntryFormProps) {
 
       <div className="field">
         <label>Tags</label>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
@@ -70,10 +77,11 @@ export default function EntryForm({ onCreated }: EntryFormProps) {
           />
           <button
             type="button"
-            className="ai-tag-btn"
+            className="ai-button"
             onClick={fillTagsWithAI}
+            disabled={aiLoading || !content.trim()}
           >
-            {aiLoading ? "..." : "AI"}
+            {aiLoading ? "Tagging..." : "⚡ AI"}
           </button>
         </div>
       </div>
@@ -100,11 +108,16 @@ export default function EntryForm({ onCreated }: EntryFormProps) {
           rows={6}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-        ></textarea>
+          placeholder="What did you debug, learn, or break today?"
+        />
       </div>
 
-      <button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Commit entry"}
+      <button
+        type="submit"
+        className="commit-button"
+        disabled={loading || !canSubmit}
+      >
+        {loading ? "Committing..." : "Commit entry"}
       </button>
     </form>
   );
