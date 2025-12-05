@@ -2,9 +2,14 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 import entriesRouter from "./routes/entries";
 
-dotenv.config();
+// 🔥 Explicitly load backend/.env using an absolute path
+const envPath = path.join(__dirname, "..", ".env");
+dotenv.config({ path: envPath });
+
+console.log("ENV DEBUG MONGO_URI =>", process.env.MONGO_URI);
 
 const app = express();
 
