@@ -1,99 +1,68 @@
-// frontend/src/components/EntryList.tsx
 "use client";
 
 import { useMemo, useState } from "react";
-import type { JournalEntry, Mood } from "@/types/journal";
 import EntryCard from "./EntryCard";
+import type { JournalEntry, Mood } from "@/types/journal";
 
-interface EntryListProps {
+interface Props {
   entries: JournalEntry[];
   onDelete: (id: string) => void;
 }
 
-const moodFilters: (Mood | "all")[] = [
-  "all",
-  "productive",
-  "meh",
-  "tired",
-  "chaotic",
-];
-
-export default function EntryList({ entries, onDelete }: EntryListProps) {
+export default function EntryList({ entries, onDelete }: Props) {
   const [filter, setFilter] = useState<Mood | "all">("all");
   const [search, setSearch] = useState("");
 
-  const filtered = useMemo(() => {
-    return entries.filter((entry) => {
-      if (filter !== "all" && entry.mood !== filter) return false;
+  const suggestions = search
+    ? entries
+        .flatMap((e) => [e.title, ...e.tags])
+        .filter((v) => v.toLowerCase().includes(search.toLowerCase()))
+        .slice(0, 5)
+    : [];
 
+  const filtered = useMemo(() => {
+    return entries.filter((e) => {
+      if (filter !== "all" && e.mood !== filter) return false;
       if (!search.trim()) return true;
 
-      const needle = search.toLowerCase();
+      const s = search.toLowerCase();
+
       return (
-        entry.title.toLowerCase().includes(needle) ||
-        entry.content.toLowerCase().includes(needle) ||
-        entry.tags.some((t) => t.toLowerCase().includes(needle))
+        e.title.toLowerCase().includes(s) ||
+        e.content.toLowerCase().includes(s) ||
+        e.tags.some((t) => t.toLowerCase().includes(s))
       );
     });
   }, [entries, filter, search]);
 
-  const total = entries.length;
-  const todayCount = entries.filter((e) => {
-    const d = new Date(e.createdAt);
-    const now = new Date();
-    return (
-      d.getDate() === now.getDate() &&
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear()
-    );
-  }).length;
-
   return (
-    <section className="entries-section">
-      <header className="entries-header">
-        <div>
-          <h2>Recent logs</h2>
-          <p>
-            {total === 0
-              ? "No entries yet. Your kernel is waiting."
-              : `${total} entr${total === 1 ? "y" : "ies"} total · ${todayCount} today`}
-          </p>
-        </div>
+    <div className="entry-list-container">
+      <input
+        className="search-input"
+        placeholder="Search..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
-        <div className="entries-controls">
-          <div className="filter-group">
-            {moodFilters.map((m) => (
-              <button
-                key={m}
-                type="button"
-                className={`filter-pill ${m === filter ? "active" : ""}`}
-                onClick={() => setFilter(m)}
-              >
-                {m === "all" ? "All moods" : m}
-              </button>
-            ))}
-          </div>
-
-          <input
-            className="search-input"
-            placeholder="Search title, content, tags..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {suggestions.length > 0 && (
+        <div className="autocomplete-box">
+          {suggestions.map((s, i) => (
+            <div
+              key={i}
+              className="autocomplete-item"
+              onClick={() => setSearch(s)}
+            >
+              {s}
+            </div>
+          ))}
         </div>
-      </header>
+      )}
 
       <div className="entries-grid">
-        {filtered.length === 0 ? (
-          <div className="card empty-card">
-            <p>No entries match this filter yet.</p>
-          </div>
-        ) : (
-          filtered.map((entry) => (
-            <EntryCard key={entry._id} entry={entry} onDelete={onDelete} />
-          ))
-        )}
+        {filtered.map((e) => (
+          <EntryCard key={e._id} entry={e} onDelete={onDelete} />
+        ))}
       </div>
-    </section>
+    </div>
   );
 }

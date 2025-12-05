@@ -1,6 +1,6 @@
-// frontend/src/components/EntryCard.tsx
 "use client";
 
+import ReactMarkdown from "react-markdown";
 import type { JournalEntry } from "@/types/journal";
 
 interface EntryCardProps {
@@ -8,7 +8,7 @@ interface EntryCardProps {
   onDelete: (id: string) => void;
 }
 
-const moodEmoji: Record<JournalEntry["mood"], string> = {
+const moodEmoji = {
   productive: "⚡",
   meh: "😐",
   tired: "🥱",
@@ -16,46 +16,35 @@ const moodEmoji: Record<JournalEntry["mood"], string> = {
 };
 
 export default function EntryCard({ entry, onDelete }: EntryCardProps) {
-  const created = new Date(entry.createdAt);
-
-  const formattedDate = created.toLocaleString(undefined, {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const created = new Date(entry.createdAt).toLocaleString();
 
   return (
     <article className="card entry-card">
       <header className="entry-header">
         <div>
           <h3>{entry.title}</h3>
-          <div className="entry-meta">
-            <span className="entry-date">{formattedDate}</span>
-            <span className={`mood-pill mood-${entry.mood}`}>
-              <span className="mood-emoji">
-                {moodEmoji[entry.mood]}&nbsp;
-              </span>
-              {entry.mood}
-            </span>
-          </div>
+          <p className="entry-meta">
+            {created} • {moodEmoji[entry.mood]} {entry.mood}
+          </p>
         </div>
+
         <button
           className="ghost-icon-button"
           onClick={() => onDelete(entry._id)}
-          aria-label="Delete entry"
         >
           ×
         </button>
       </header>
 
-      <p className="entry-content">{entry.content}</p>
+      <div className="entry-content">
+        <ReactMarkdown>{entry.content}</ReactMarkdown>
+      </div>
 
-      {entry.tags?.length > 0 && (
+      {entry.tags.length > 0 && (
         <div className="tag-row">
-          {entry.tags.map((tag) => (
-            <span key={tag} className="tag-pill">
-              #{tag}
+          {entry.tags.map((t) => (
+            <span className="tag-pill" key={t}>
+              #{t}
             </span>
           ))}
         </div>

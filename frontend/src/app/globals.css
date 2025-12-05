@@ -517,3 +517,27 @@ textarea {
   flex-direction: column;
   gap: 12px;
 }
+/* AI Tag Button */
+.ai-tag-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+}
+
+/* Autocomplete */
+.autocomplete-box {
+  background: var(--bg-elevated);
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  margin-top: 4px;
+}
+.autocomplete-item {
+  padding: 4px;
+  cursor: pointer;
+}
+.autocomplete-item:hover {
+  background: var(--accent-soft);
+}

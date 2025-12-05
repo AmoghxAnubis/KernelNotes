@@ -1,49 +1,29 @@
-// frontend/app/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import type { JournalEntry } from "@/types/journal";
-import { fetchEntries, deleteEntryApi } from "@/lib/api";
 import EntryForm from "@/components/EntryForm";
 import EntryList from "@/components/EntryList";
 import ThemeToggle from "@/components/ThemeToggle";
+import { fetchEntries, deleteEntryApi } from "@/lib/api";
+import type { JournalEntry } from "@/types/journal";
+import { calculateStreak } from "@/lib/streak";
+import { exportEntries } from "@/lib/exportPdf";
 
 export default function HomePage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function load() {
-    setLoading(true);
-    try {
-      const data = await fetchEntries();
-      setEntries(data);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load entries");
-    } finally {
-      setLoading(false);
-    }
+    const data = await fetchEntries();
+    setEntries(data);
+    setLoading(false);
   }
 
   useEffect(() => {
     load();
   }, []);
 
-  function handleCreated(entry: JournalEntry) {
-    setEntries((prev) => [entry, ...prev]);
-  }
-
-  async function handleDelete(id: string) {
-    const prev = entries;
-    setEntries((e) => e.filter((x) => x._id !== id));
-    try {
-      await deleteEntryApi(id);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete entry");
-      setEntries(prev);
-    }
-  }
+  const streak = calculateStreak(entries);
 
   return (
     <main className="shell">
@@ -52,25 +32,47 @@ export default function HomePage() {
           <span className="brand-orb" />
           <div>
             <h1>KernelNotes</h1>
-            <p>Your dev brain, logged like system dmesg.</p>
+            <p>🔥 {streak}-day streak</p>
           </div>
         </div>
-        <ThemeToggle />
+
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button
+            className="theme-toggle"
+            onClick={() => exportEntries(entries)}
+          >
+            Export PDF
+          </button>
+          <ThemeToggle />
+        </div>
       </header>
 
       <div className="layout-grid">
         <div className="left-column">
-          <EntryForm onCreated={handleCreated} />
+          <EntryForm
+            onCreated={(e) => setEntries((prev) => [e, ...prev])}
+          />
         </div>
 
         <div className="right-column">
           {loading ? (
             <div className="card loading-card">
               <div className="spinner" />
-              <p>Booting your entries...</p>
+              <p>Loading...</p>
             </div>
           ) : (
-            <EntryList entries={entries} onDelete={handleDelete} />
+            <EntryList
+              entries={entries}
+              onDelete={async (id) => {
+                const prev = entries;
+                setEntries(prev.filter((x) => x._id !== id));
+                try {
+                  await deleteEntryApi(id);
+                } catch {
+                  setEntries(prev);
+                }
+              }}
+            />
           )}
         </div>
       </div>
